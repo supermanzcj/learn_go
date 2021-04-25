@@ -5,6 +5,7 @@ import (
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"log"
+	"time"
 )
 
 var Db *sql.DB
@@ -22,23 +23,25 @@ const (
  * DB初始化
  */
 func init() {
-	//fmt.Println("init")
-	//dbCfg := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=%s", USERNAME, PASSWORD, HOST, PORT, DATABASE, CHARSET)
-	//fmt.Printf("dbCfg：%s \n", dbCfg)
-	//Db, err := sql.Open("mysql", dbCfg)
-	//if err != nil {
-	//	fmt.Println(err)
-	//	panic("数据源配置不正确: " + err.Error())
-	//}
-	//
-	////Db.SetConnMaxLifetime(time.Minute * 3)
-	////Db.SetMaxOpenConns(10)
-	////Db.SetMaxIdleConns(10)
-	//
-	//if err = Db.Ping(); nil != err {
-	//	fmt.Println(err)
-	//	panic("数据库链接失败: " + err.Error())
-	//}
+	fmt.Println("init")
+	dbCfg := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=%s", USERNAME, PASSWORD, HOST, PORT, DATABASE, CHARSET)
+	fmt.Printf("dbCfg：%s \n", dbCfg)
+	Database, err := sql.Open("mysql", dbCfg)
+	if err != nil {
+		fmt.Println(err)
+		panic("数据源配置不正确: " + err.Error())
+	}
+
+	Db = Database
+
+	Db.SetConnMaxLifetime(time.Minute * 3)
+	Db.SetMaxOpenConns(10)
+	Db.SetMaxIdleConns(10)
+
+	if err = Db.Ping(); nil != err {
+		fmt.Println(err)
+		panic("数据库链接失败: " + err.Error())
+	}
 }
 
 // 用户表结构体
@@ -47,18 +50,20 @@ type User struct {
 	username string  `db:"username"`
 	sex int `db:"sex"`
 	mobile string `db:"mobile"`
+	addTime string `db:"addTime"`
 }
 
 func main() {
-	dbCfg := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=%s", USERNAME, PASSWORD, HOST, PORT, DATABASE, CHARSET)
-
-	Db, err := sql.Open("mysql", dbCfg)
-	if err != nil {
-		fmt.Println(err)
-		panic("数据源配置不正确: " + err.Error())
-	}
-	defer Db.Close()
-	fmt.Printf("test：%v \n", Db)
+	//dbCfg := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=%s", USERNAME, PASSWORD, HOST, PORT, DATABASE, CHARSET)
+	//fmt.Printf("dbCfg：%s \n", dbCfg)
+	//Db, err := sql.Open("mysql", dbCfg)
+	//
+	//if err != nil {
+	//	fmt.Println(err)
+	//	panic("数据源配置不正确: " + err.Error())
+	//}
+	//defer Db.Close()
+	fmt.Printf("Db：%v \n", Db)
 
 	//users := make([]User, 0)
 
