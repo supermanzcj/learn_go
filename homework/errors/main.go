@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
-	"log"
 	"time"
 )
 
@@ -54,44 +53,20 @@ type User struct {
 }
 
 func main() {
-	//dbCfg := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=%s", USERNAME, PASSWORD, HOST, PORT, DATABASE, CHARSET)
-	//fmt.Printf("dbCfg：%s \n", dbCfg)
-	//Db, err := sql.Open("mysql", dbCfg)
-	//
-	//if err != nil {
-	//	fmt.Println(err)
-	//	panic("数据源配置不正确: " + err.Error())
-	//}
-	//defer Db.Close()
-	fmt.Printf("Db：%v \n", Db)
+	users := make(map[interface{}]interface{})
 
-	//users := make([]User, 0)
-
-	var (
-		id int
-		username string
-	)
-
-	rows, err := Db.Query("SELECT id, username FROM tbUser LIMIT ?", 10)
+	rows, err := Db.Query("SELECT id, username, sex, mobile, addTime FROM tbUser LIMIT ?", 10)
 	if err != nil {
 		fmt.Println(err)
 	}
 	defer rows.Close()
 
-	for rows.Next() {
-		err := rows.Scan(&id, &username)
-		if err != nil {
-			fmt.Println(err)
-		}
-		log.Println(id, username)
+	var user User
+
+	for rows.Next(){
+		rows.Scan(&user.id, &user.username, &user.sex, &user.mobile, &user.addTime)
+		users[user.id] = user
 	}
 
-	//var user User
-	//
-	//for rows.Next(){
-	//	rows.Scan(&user.id, &user.username, &user.sex, &user.mobile)
-	//	users = append(users,user)
-	//}
-	//
-	//fmt.Println(users)
+	fmt.Println(users)
 }
