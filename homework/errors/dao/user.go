@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"log"
 )
 
 var Db *sql.DB
@@ -47,10 +48,13 @@ type User struct {
 	addTime string `db:"addTime"`
 }
 
-func GetUserList() {
+/*
+ * 查询用户列表
+ */
+func GetUserList(num int) {
 	users := make(map[interface{}]interface{})
 
-	rows, err := Db.Query("SELECT id, username, sex, mobile, addTime FROM tbUser LIMIT ?", 10)
+	rows, err := Db.Query("SELECT id, username, sex, mobile, addTime FROM tbUser LIMIT ?", num)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -63,4 +67,22 @@ func GetUserList() {
 	}
 
 	fmt.Println(users)
+}
+
+/*
+ * 根据用户ID查询用户信息
+ */
+func GetUserInfo(id int) {
+	var user User
+
+	err := Db.QueryRow("SELECT id, username, sex, mobile, addTime FROM tbUser WHERE id = ?", id).Scan(&user.id, &user.username, &user.sex, &user.mobile, &user.addTime)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// 空结果，并不是一个错误，不应该Wrap这个error抛给上层。
+		} else {
+			log.Fatal(err)
+		}
+	}
+
+	fmt.Println(user)
 }
