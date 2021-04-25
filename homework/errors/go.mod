@@ -1,4 +1,4 @@
-module learn_go/homework/errors
+module errors
 
 go 1.16
 
