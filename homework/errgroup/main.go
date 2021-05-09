@@ -1,35 +1,71 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"github.com/go-errors/errors"
 	"golang.org/x/sync/errgroup"
+	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 func main() {
-	var g errgroup.Group
-	var urls = []string{
-		"http://www.baidu.com/",
-		"http://www.baidu.com/",
-		"http://www.1234567.com/",//假的
+	g, ctx := errgroup.WithContext(context.Background())
+
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Hello World"))
+	})
+
+	//模拟http server关闭
+	serverClose := make(chan struct{})
+	mux.HandleFunc("/close", func(w http.ResponseWriter, r *http.Request) {
+		serverClose <- struct{}{}
+	})
+
+	server := http.Server{
+		Addr: ":8888",
+		ReadTimeout: 60 * time.Second,
+		WriteTimeout: 60 * time.Second,
+		Handler: mux,
 	}
-	for _, url := range urls {
-		// Launch a goroutine to fetch the URL.
-		url := url
-		g.Go(func() error {
-			// Fetch the URL.
-			resp, err := http.Get(url)
-			if err == nil { // 这里记得关掉
-				resp.Body.Close()
-			}
-			return err
-		})
-	}
-	// Wait for all HTTP fetches to complete.
-	err := g.Wait();
-	if err != nil {
-		fmt.Printf("err: %v", err)
-		return
-	}
-	fmt.Println("Successfully fetched all URLs.")
+	
+	g.Go(func() error {
+		return server.ListenAndServe()
+	})
+
+	g.Go(func() error {
+		select {
+			case <-ctx.Done():
+				log.Println("Errgroup exit...")
+			case <-serverClose:
+				log.Println("Server will close...")
+		}
+
+		timeoutCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+
+		defer cancel()
+
+		log.Println("Server is closing...")
+		return server.Shutdown(timeoutCtx)
+	})
+
+	g.Go(func() error {
+		quit := make(chan os.Signal, 0)
+		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+		select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case sig := <-quit:
+				return errors.Errorf("Linux signal: %v", sig)
+		}
+	})
+
+	fmt.Printf("Errgroup: %+v\n", g.Wait())
 }
