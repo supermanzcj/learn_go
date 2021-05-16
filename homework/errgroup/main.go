@@ -34,7 +34,7 @@ func main() {
 		WriteTimeout: 60 * time.Second,
 		Handler: mux,
 	}
-	
+
 	g.Go(func() error {
 		return server.ListenAndServe()
 	})
